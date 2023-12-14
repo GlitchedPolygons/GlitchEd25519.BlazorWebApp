@@ -1,0 +1,3 @@
+[submodule "Submodules/GlitchEd25519"]
+	path = Submodules/GlitchEd25519
+	url = https://github.com/GlitchedPolygons/GlitchEd25519

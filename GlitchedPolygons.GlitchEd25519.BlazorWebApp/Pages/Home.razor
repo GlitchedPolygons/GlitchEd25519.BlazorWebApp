@@ -1,0 +1,364 @@
+﻿@page "/"
+
+@using System.Security.Cryptography
+@using System.Text
+@using GlitchedPolygons.ExtensionMethods
+@using Org.BouncyCastle.Crypto.Engines
+@using Org.BouncyCastle.Crypto.Modes
+@using Org.BouncyCastle.Crypto.Parameters
+@using GlitchEd25519 = global::GlitchEd25519
+
+<PageTitle>
+    GlitchEd25519
+</PageTitle>
+
+<h1 title="With Ed25519 &amp; 256-bit AES (GCM)">
+    Encrypt / Decrypt
+</h1>
+
+<br />
+
+<div class="accordion"
+     id="accordion">
+    <div class="accordion-item">
+        <h2 class="accordion-header"
+            id="headingOne">
+            <button class="accordion-button"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseOne"
+                    aria-expanded="true"
+                    aria-controls="collapseOne">
+                Cipher information
+            </button>
+        </h2>
+        <div id="collapseOne"
+             class="accordion-collapse collapse show"
+             aria-labelledby="headingOne"
+             data-bs-parent="#accordion">
+            <div class="accordion-body">
+                <ul>
+                    <li class="mt-3">
+                        Encryption technique:
+                        <ul>
+                            <li>
+                                Asymmetric
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <li class="mt-3">
+                        Digital signature scheme:
+                        <ul>
+                            <li>
+                                EdDSA (Ed25519)
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <li class="mt-3">
+                        Underlying block cipher:
+                        <ul>
+                            <li>
+                                AES-256 (in Galois/Counter Mode)
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <li class="mt-3 mb-0">
+                        Built-in .NET AES-256 GCM cipher supported: @aesGcmSupported
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br />
+
+<div class="form-group">
+
+    <label class="col-form-label mt-4"
+           for="privateKey">
+        Private key (sender)
+    </label>
+
+    <input type="password"
+           class="form-control"
+           placeholder="Hex-encoded Ed25519 private key string (Ref10 format)"
+           id="privateKey"
+           @bind="privateKeyHexStringRef10">
+</div>
+
+<div class="form-group">
+
+    <label class="col-form-label mt-4"
+           for="publicKey">
+        Public key (recipient)
+    </label>
+
+    <input type="text"
+           class="form-control"
+           placeholder="Hex-encoded Ed25519 public key string"
+           id="publicKey"
+           @bind="publicKeyHexString">
+</div>
+
+<br />
+
+<ul class="nav nav-tabs mt-4"
+    role="tablist">
+
+    <li class="nav-item"
+        role="presentation">
+
+        <a class="nav-link active"
+           data-bs-toggle="tab"
+           aria-selected="false"
+           href="#encrypt"
+           role="tab"
+           tabindex="-1">
+            Encrypt
+        </a>
+    </li>
+
+    <li class="nav-item"
+        role="presentation">
+
+        <a class="nav-link"
+           data-bs-toggle="tab"
+           aria-selected="true"
+           href="#decrypt"
+           role="tab">
+            Decrypt
+        </a>
+    </li>
+</ul>
+
+<div id="myTabContent"
+     class="tab-content">
+
+    <div class="tab-pane fade active show"
+         id="encrypt"
+         role="tabpanel">
+
+        <div class="form-group">
+            <label for="message"
+                   class="form-label mt-4">
+                Message
+            </label>
+            <textarea class="form-control" id="message" rows="4" @bind="encryptionPlaintext"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="ciphertext"
+                   class="form-label mt-4">
+                Ciphertext
+            </label>
+            <textarea class="form-control" id="ciphertext" rows="4" @bind="encryptionCiphertext"></textarea>
+        </div>
+
+        <button class="btn btn-primary mt-4"
+                @onclick="EncryptString">
+            Encrypt
+        </button>
+
+    </div>
+
+    <div class="tab-pane fade"
+         id="decrypt"
+         role="tabpanel">
+
+        <div class="form-group">
+            <label for="decryptionCiphertext"
+                   class="form-label mt-4">
+                Ciphertext
+            </label>
+            <textarea class="form-control" id="decryptionCiphertext" rows="4" @bind="decryptionCiphertext"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="decryptedMessage"
+                   class="form-label mt-4">
+                Message
+            </label>
+            <textarea class="form-control" id="decryptedMessage" rows="4" @bind="decryptionPlaintext"></textarea>
+        </div>
+
+        <button class="btn btn-primary mt-4"
+                @onclick="DecryptString">
+            Decrypt
+        </button>
+
+    </div>
+</div>
+
+@code
+{
+    private readonly bool aesGcmSupported = AesGcm.IsSupported;
+    private readonly byte[] nonceBytes = new byte[Constants.AesGcm.NONCE_SIZE_BYTES];
+
+    private string encryptionPlaintext = string.Empty;
+    private string encryptionCiphertext = string.Empty;
+
+    private string decryptionPlaintext = string.Empty;
+    private string decryptionCiphertext = string.Empty;
+
+    private string publicKeyHexString = string.Empty;
+    private string privateKeyHexStringRef10 = string.Empty;
+
+    private void EncryptString()
+    {
+        if (encryptionPlaintext.NullOrEmpty())
+        {
+            return;
+        }
+
+        if (publicKeyHexString.Length != 64 || privateKeyHexStringRef10.Length != 128)
+        {
+    // TODO: bail out and warn user of invalid key parameters
+            return;
+        }
+
+        try
+        {
+            Random.Shared.NextBytes(nonceBytes);
+
+            Span<byte> signatureBytes = stackalloc byte[Constants.Ed25519.SIGNATURE_SIZE_BYTES];
+            Span<byte> sharedSecretBytes = stackalloc byte[Constants.Ed25519.SHARED_SECRET_SIZE_BYTES];
+
+            Span<byte> publicKeyBytes = Convert.FromHexString(publicKeyHexString);
+            Span<byte> privateKeyBytesRef10 = Convert.FromHexString(privateKeyHexStringRef10);
+
+            GlitchEd25519.KeyExchangeRef10(ref sharedSecretBytes, publicKeyBytes, privateKeyBytesRef10);
+
+            Span<byte> aesGcmKeyBytes = stackalloc byte[Constants.AesGcm.KEY_SIZE_BYTES];
+
+            SHA256.HashData(sharedSecretBytes, aesGcmKeyBytes);
+
+            AesEngine aesEngine = new();
+            GcmBlockCipher aesGcm = new(aesEngine);
+            AeadParameters parameters = new(new KeyParameter(aesGcmKeyBytes), Constants.AesGcm.MAC_SIZE_BYTES, nonceBytes, null);
+
+            aesGcm.Init(true, parameters);
+
+            Span<byte> plaintextBytes = encryptionPlaintext.UTF8GetBytes();
+            Span<byte> ciphertextBytes = new byte[aesGcm.GetOutputSize(plaintextBytes.Length)];
+
+            int processedBytes = aesGcm.ProcessBytes(plaintextBytes, ciphertextBytes);
+
+            aesGcm.DoFinal(ciphertextBytes);
+
+            GlitchEd25519.SignRef10(ref signatureBytes, ciphertextBytes, privateKeyBytesRef10);
+
+            Span<byte> resultBytes = new byte[Constants.AesGcm.NONCE_SIZE_BYTES + Constants.Ed25519.SIGNATURE_SIZE_BYTES + ciphertextBytes.Length];
+
+            int offset = 0;
+
+            nonceBytes.CopyTo(resultBytes[offset..]);
+            offset += Constants.AesGcm.NONCE_SIZE_BYTES;
+
+            signatureBytes.CopyTo(resultBytes[offset..]);
+            offset += Constants.Ed25519.SIGNATURE_SIZE_BYTES;
+
+            ciphertextBytes.CopyTo(resultBytes[offset..]);
+
+            encryptionCiphertext = Convert.ToHexString(resultBytes);
+
+            Random.Shared.NextBytes(nonceBytes);
+
+            CryptographicOperations.ZeroMemory(signatureBytes);
+            CryptographicOperations.ZeroMemory(sharedSecretBytes);
+            CryptographicOperations.ZeroMemory(publicKeyBytes);
+            CryptographicOperations.ZeroMemory(privateKeyBytesRef10);
+            CryptographicOperations.ZeroMemory(aesGcmKeyBytes);
+            CryptographicOperations.ZeroMemory(resultBytes);
+            CryptographicOperations.ZeroMemory(ciphertextBytes);
+            CryptographicOperations.ZeroMemory(plaintextBytes);
+        }
+        catch (Exception e)
+        {
+            encryptionCiphertext = $"Encryption failed. Thrown exception: {e.ToString()}";
+        }
+    }
+
+    private void DecryptString()
+    {
+        if (decryptionCiphertext.NullOrEmpty())
+        {
+            return;
+        }
+
+        if (decryptionCiphertext.Length % 2 != 0)
+        {
+    // TODO: bail out and warn user of invalid ciphertext hex-encoded string format
+            return;
+        }
+
+        if (publicKeyHexString.Length != 64 || privateKeyHexStringRef10.Length != 128)
+        {
+    // TODO: bail out and warn user of invalid key parameters
+            return;
+        }
+
+        try
+        {
+            Span<byte> signatureBytes = stackalloc byte[Constants.Ed25519.SIGNATURE_SIZE_BYTES];
+            Span<byte> sharedSecretBytes = stackalloc byte[Constants.Ed25519.SHARED_SECRET_SIZE_BYTES];
+
+            Span<byte> publicKeyBytes = Convert.FromHexString(publicKeyHexString);
+            Span<byte> privateKeyBytesRef10 = Convert.FromHexString(privateKeyHexStringRef10);
+
+            GlitchEd25519.KeyExchangeRef10(ref sharedSecretBytes, publicKeyBytes, privateKeyBytesRef10);
+
+            Span<byte> aesGcmKeyBytes = stackalloc byte[Constants.AesGcm.KEY_SIZE_BYTES];
+
+            SHA256.HashData(sharedSecretBytes, aesGcmKeyBytes);
+
+            Span<byte> encryptionCiphertextBytes = Convert.FromHexString(decryptionCiphertext);
+
+            encryptionCiphertextBytes[..Constants.AesGcm.NONCE_SIZE_BYTES]
+                .CopyTo(nonceBytes);
+
+            encryptionCiphertextBytes
+                .Slice(Constants.AesGcm.NONCE_SIZE_BYTES, Constants.Ed25519.SIGNATURE_SIZE_BYTES)
+                .CopyTo(signatureBytes);
+
+            Span<byte> ciphertextBytes = encryptionCiphertextBytes[(Constants.AesGcm.NONCE_SIZE_BYTES + Constants.Ed25519.SIGNATURE_SIZE_BYTES)..];
+
+            bool signatureValid = GlitchEd25519.Verify(signatureBytes, ciphertextBytes, publicKeyBytes);
+
+            AesEngine aesEngine = new();
+            GcmBlockCipher cipher = new(aesEngine);
+            AeadParameters parameters = new AeadParameters(new KeyParameter(aesGcmKeyBytes), Constants.AesGcm.MAC_SIZE_BYTES, nonceBytes, null);
+
+            cipher.Init(false, parameters);
+
+            Span<byte> plaintextBytes = new byte[cipher.GetOutputSize(ciphertextBytes.Length)];
+
+            int processedBytes = cipher.ProcessBytes(ciphertextBytes, plaintextBytes);
+
+            cipher.DoFinal(plaintextBytes);
+
+            decryptionPlaintext =
+                signatureValid
+                    ? Encoding.UTF8.GetString(plaintextBytes)
+                    : $"\u26a1 \u26a1 \u26a1 WARNING! Decryption successful, but signature verification failed. Message might have been tampered with! Sender's public key used for signature verification ends with \"{publicKeyHexString[^6..]}\" (see above).\n\n{Encoding.UTF8.GetString(plaintextBytes)}";
+
+            Random.Shared.NextBytes(nonceBytes);
+
+            CryptographicOperations.ZeroMemory(signatureBytes);
+            CryptographicOperations.ZeroMemory(sharedSecretBytes);
+            CryptographicOperations.ZeroMemory(publicKeyBytes);
+            CryptographicOperations.ZeroMemory(privateKeyBytesRef10);
+            CryptographicOperations.ZeroMemory(aesGcmKeyBytes);
+            CryptographicOperations.ZeroMemory(encryptionCiphertextBytes);
+            CryptographicOperations.ZeroMemory(ciphertextBytes);
+            CryptographicOperations.ZeroMemory(plaintextBytes);
+        }
+        catch (Exception e)
+        {
+            decryptionPlaintext = $"Decryption failed. Thrown exception: {e.ToString()}";
+        }
+    }
+}

@@ -1,0 +1,110 @@
+﻿@page "/keygen"
+@using GlitchEd25519 = global::GlitchEd25519
+@using System.Security.Cryptography
+@using GlitchedPolygons.ExtensionMethods
+
+<PageTitle>
+    GlitchEd25519 - Keygen
+</PageTitle>
+
+<h1>
+    Ed25519 Keygen
+</h1>
+
+<br />
+
+<p>
+    <strong>Private key is in Ref10 format and hex-encoded string</strong>
+</p>
+
+@if (DEBUG)
+{
+    <p role="status">
+        Generated seed: @seed
+    </p>
+}
+
+<p role="status">
+    Generated public key hex string: @publicKeyHexString
+</p>
+
+<p role="status">
+    Generated private key hex string:
+    @if (privateKeyHexString.NotNullNotEmpty())
+    {
+        <i>(censored)</i>
+    }
+</p>
+
+<button class="btn btn-primary"
+        @onclick="GenerateNewKeypair">
+    Generate key pair
+</button>
+
+<button class="btn btn-primary"
+        @onclick="CopyPublicKey">
+    Copy public key
+</button>
+
+<button class="btn btn-primary"
+        @onclick="CopyPrivateKey">
+    Copy private key
+</button>
+
+@code {
+
+    private readonly bool aesGcmSupported = AesGcm.IsSupported;
+
+#if DEBUG
+    private const bool DEBUG = true;
+    private string seed = string.Empty;
+#else
+    private const bool DEBUG = false;
+#endif
+
+    private string additionalEntropy = string.Empty;
+    private string publicKeyHexString = string.Empty;
+    private string privateKeyHexString = string.Empty;
+
+    private void GenerateNewKeypair()
+    {
+        Span<byte> generatedSeed = stackalloc byte[32];
+        Span<byte> generatedPublicKey = stackalloc byte[32];
+        Span<byte> generatedPrivateKey = stackalloc byte[64];
+        Span<byte> additionalEntropyBytes = stackalloc byte[64];
+
+        if (additionalEntropy.NullOrEmpty())
+        {
+            Random.Shared.NextBytes(additionalEntropyBytes);
+        }
+
+        SHA512.HashData(additionalEntropy.UTF8GetBytes(), additionalEntropyBytes);
+
+        GlitchEd25519.CreateSeed(ref generatedSeed, additionalEntropyBytes);
+
+#if DEBUG
+        seed = Convert.ToHexString(generatedSeed);
+#endif
+
+        GlitchEd25519.CreateKeypairRef10(ref generatedPublicKey, ref generatedPrivateKey, generatedSeed);
+
+        publicKeyHexString = Convert.ToHexString(generatedPublicKey);
+        privateKeyHexString = Convert.ToHexString(generatedPrivateKey);
+
+        CryptographicOperations.ZeroMemory(generatedSeed);
+        CryptographicOperations.ZeroMemory(generatedPublicKey);
+        CryptographicOperations.ZeroMemory(generatedPrivateKey);
+        CryptographicOperations.ZeroMemory(additionalEntropyBytes);
+    }
+
+    private void CopyPublicKey()
+    {
+    // TODO
+    }
+
+    private void CopyPrivateKey()
+    {
+    // TODO
+    }
+
+}
