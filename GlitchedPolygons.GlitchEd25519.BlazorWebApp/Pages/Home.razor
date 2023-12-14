@@ -439,7 +439,6 @@
 
     private async Task PasteDecryptionCiphertextFromClipboard()
     {
-        string clipboard = await JSRuntime.InvokeAsync<string>("navigator.clipboard.readText");
-        decryptionCiphertext = clipboard;
+        decryptionCiphertext = await JSRuntime.InvokeAsync<string>("navigator.clipboard.readText");
     }
 }
