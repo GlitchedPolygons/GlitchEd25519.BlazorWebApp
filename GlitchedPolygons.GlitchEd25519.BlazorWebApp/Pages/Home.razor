@@ -137,9 +137,10 @@
     </label>
 
     <input type="password"
-           class="form-control"
-           placeholder="Hex-encoded Ed25519 private key string (Ref10 format)"
            id="privateKey"
+           class="form-control"
+           onClick="this.select();"
+           placeholder="Hex-encoded Ed25519 private key string (Ref10 format)"
            @bind="privateKeyHexStringRef10">
 </div>
 
@@ -151,9 +152,10 @@
     </label>
 
     <input type="text"
-           class="form-control"
-           placeholder="Hex-encoded Ed25519 public key string"
            id="publicKey"
+           class="form-control"
+           onClick="this.select();"
+           placeholder="Hex-encoded Ed25519 public key string"
            @bind="publicKeyHexString">
 </div>
 
