@@ -213,14 +213,14 @@
             <textarea class="form-control" id="ciphertext" rows="4" @bind="encryptionCiphertext"></textarea>
         </div>
 
-        <div style="display: flex; gap: 12px;">
-            <button class="btn btn-primary mt-4 stretch-when-narrow"
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem">
+            <button class="btn btn-primary stretch-when-narrow"
                     style="padding-left: 24px; padding-right: 24px;"
                     @onclick="EncryptString">
                 Encrypt
             </button>
 
-            <button class="btn btn-primary mt-4 stretch-when-narrow"
+            <button class="btn btn-primary stretch-when-narrow"
                     style="padding-left: 24px; padding-right: 24px;"
                     @onclick="CopyEncryptionCiphertextToClipboard">
                 Copy ciphertext
@@ -248,14 +248,14 @@
             <textarea class="form-control" id="decryptedMessage" rows="4" @bind="decryptionPlaintext"></textarea>
         </div>
 
-        <div style="display: flex; gap: 12px;">
-            <button class="btn btn-primary mt-4"
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem">
+            <button class="btn btn-primary stretch-when-narrow"
                     style="padding-left: 24px; padding-right: 24px;"
                     @onclick="DecryptString">
                 Decrypt
             </button>
 
-            <button class="btn btn-primary mt-4"
+            <button class="btn btn-primary stretch-when-narrow"
                     style="padding-left: 24px; padding-right: 24px;"
                     @onclick="PasteDecryptionCiphertextFromClipboard">
                 Paste ciphertext
