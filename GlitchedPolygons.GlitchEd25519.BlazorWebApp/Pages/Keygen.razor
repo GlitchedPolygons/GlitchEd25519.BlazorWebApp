@@ -60,12 +60,12 @@
     private readonly bool aesGcmSupported = AesGcm.IsSupported;
 
 #if DEBUG
-    private const bool DEBUG = true;
-    private string seed = string.Empty;
+        private const bool DEBUG = true;
 #else
-    private const bool DEBUG = false;
+        private const bool DEBUG = false;
 #endif
 
+    private string seed = string.Empty;
     private string additionalEntropy = string.Empty;
     private string publicKeyHexString = string.Empty;
     private string privateKeyHexString = string.Empty;
