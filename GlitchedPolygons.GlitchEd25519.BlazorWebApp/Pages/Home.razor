@@ -1,5 +1,7 @@
 ﻿@page "/"
 
+@inject IJSRuntime JSRuntime
+
 @using System.Security.Cryptography
 @using System.Text
 @using GlitchedPolygons.ExtensionMethods
@@ -215,6 +217,12 @@
             Encrypt
         </button>
 
+        <button class="btn btn-primary mt-4"
+                style="padding-left: 24px; padding-right: 24px;"
+                @onclick="CopyEncryptionCiphertextToClipboard">
+            Copy ciphertext
+        </button>
+
     </div>
 
     <div class="tab-pane fade"
@@ -241,6 +249,12 @@
                 style="padding-left: 24px; padding-right: 24px;"
                 @onclick="DecryptString">
             Decrypt
+        </button>
+
+        <button class="btn btn-primary mt-4"
+                style="padding-left: 24px; padding-right: 24px;"
+                @onclick="PasteDecryptionCiphertextFromClipboard">
+            Paste ciphertext
         </button>
 
     </div>
@@ -413,5 +427,17 @@
         {
             decryptionPlaintext = $"Decryption failed. Thrown exception: {e.ToString()}";
         }
+    }
+
+    private async Task CopyEncryptionCiphertextToClipboard()
+    {
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", encryptionCiphertext);
+        await JSRuntime.InvokeVoidAsync("alert", "Copied encrypted message to clipboard. Send this to your recipient :)");
+    }
+
+    private async Task PasteDecryptionCiphertextFromClipboard()
+    {
+        string clipboard = await JSRuntime.InvokeAsync<string>("navigator.clipboard.readText");
+        decryptionCiphertext = clipboard;
     }
 }
