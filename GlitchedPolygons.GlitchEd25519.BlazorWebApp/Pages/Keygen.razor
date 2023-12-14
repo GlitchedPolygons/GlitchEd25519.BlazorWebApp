@@ -45,23 +45,40 @@
     Therefore: <strong>make sure to save both your public and private key somewhere safe and secret!</strong>
 </p>
 
-<button class="btn btn-primary"
-        style="padding-left: 24px; padding-right: 24px;"
-        @onclick="GenerateNewKeypair">
-    Generate key pair
-</button>
+<div class="form-group">
 
-<button class="btn btn-primary"
-        style="padding-left: 24px; padding-right: 24px;"
-        @onclick="CopyPublicKey">
-    Copy public key
-</button>
+    <label class="col-form-label mt-4"
+           for="publicKey">
+        Additional entropy
+    </label>
 
-<button class="btn btn-primary"
-        style="padding-left: 24px; padding-right: 24px;"
-        @onclick="CopyPrivateKey">
-    Copy private key
-</button>
+    <input type="text"
+           id="publicKey"
+           class="form-control"
+           onClick="this.select();"
+           placeholder="Go ahead, go nuts! Smash your keyboard, hack in some random shit here :D"
+           @bind="additionalEntropy">
+</div>
+
+<div style="display: flex; gap: 12px; margin-top: 1.5rem">
+    <button class="btn btn-primary stretch-when-narrow"
+            style="padding-left: 24px; padding-right: 24px;"
+            @onclick="GenerateNewKeypair">
+        Generate key pair
+    </button>
+    
+    <button class="btn btn-primary stretch-when-narrow"
+            style="padding-left: 24px; padding-right: 24px;"
+            @onclick="CopyPublicKey">
+        Copy public key
+    </button>
+    
+    <button class="btn btn-primary stretch-when-narrow"
+            style="padding-left: 24px; padding-right: 24px;"
+            @onclick="CopyPrivateKey">
+        Copy private key
+    </button>
+</div>
 
 @code {
 
@@ -89,8 +106,10 @@
         {
             Random.Shared.NextBytes(additionalEntropyBytes);
         }
-
-        SHA512.HashData(additionalEntropy.UTF8GetBytes(), additionalEntropyBytes);
+        else
+        {
+            SHA512.HashData(additionalEntropy.UTF8GetBytes(), additionalEntropyBytes);
+        }
 
         GlitchEd25519.CreateSeed(ref generatedSeed, additionalEntropyBytes);
 

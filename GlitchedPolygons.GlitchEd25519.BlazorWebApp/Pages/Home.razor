@@ -25,11 +25,11 @@
     <div class="accordion-item">
         <h2 class="accordion-header"
             id="headingOne">
-            <button class="accordion-button"
+            <button class="accordion-button collapsed"
                     type="button"
                     data-bs-toggle="collapse"
                     data-bs-target="#collapseOne"
-                    aria-expanded="true"
+                    aria-expanded="false"
                     aria-controls="collapseOne">
                 Cipher information
             </button>
@@ -213,18 +213,19 @@
             <textarea class="form-control" id="ciphertext" rows="4" @bind="encryptionCiphertext"></textarea>
         </div>
 
-        <button class="btn btn-primary mt-4"
-                style="padding-left: 24px; padding-right: 24px;"
-                @onclick="EncryptString">
-            Encrypt
-        </button>
+        <div style="display: flex; gap: 12px;">
+            <button class="btn btn-primary mt-4 stretch-when-narrow"
+                    style="padding-left: 24px; padding-right: 24px;"
+                    @onclick="EncryptString">
+                Encrypt
+            </button>
 
-        <button class="btn btn-primary mt-4"
-                style="padding-left: 24px; padding-right: 24px;"
-                @onclick="CopyEncryptionCiphertextToClipboard">
-            Copy ciphertext
-        </button>
-
+            <button class="btn btn-primary mt-4 stretch-when-narrow"
+                    style="padding-left: 24px; padding-right: 24px;"
+                    @onclick="CopyEncryptionCiphertextToClipboard">
+                Copy ciphertext
+            </button>
+        </div>
     </div>
 
     <div class="tab-pane fade"
@@ -247,18 +248,19 @@
             <textarea class="form-control" id="decryptedMessage" rows="4" @bind="decryptionPlaintext"></textarea>
         </div>
 
-        <button class="btn btn-primary mt-4"
-                style="padding-left: 24px; padding-right: 24px;"
-                @onclick="DecryptString">
-            Decrypt
-        </button>
+        <div style="display: flex; gap: 12px;">
+            <button class="btn btn-primary mt-4"
+                    style="padding-left: 24px; padding-right: 24px;"
+                    @onclick="DecryptString">
+                Decrypt
+            </button>
 
-        <button class="btn btn-primary mt-4"
-                style="padding-left: 24px; padding-right: 24px;"
-                @onclick="PasteDecryptionCiphertextFromClipboard">
-            Paste ciphertext
-        </button>
-
+            <button class="btn btn-primary mt-4"
+                    style="padding-left: 24px; padding-right: 24px;"
+                    @onclick="PasteDecryptionCiphertextFromClipboard">
+                Paste ciphertext
+            </button>
+        </div>
     </div>
 </div>
 
@@ -285,7 +287,7 @@
 
         if (publicKeyHexString.Length != 64 || privateKeyHexStringRef10.Length != 128)
         {
-    // TODO: bail out and warn user of invalid key parameters
+            // TODO: bail out and warn user of invalid key parameters
             return;
         }
 
@@ -360,13 +362,13 @@
 
         if (decryptionCiphertext.Length % 2 != 0)
         {
-    // TODO: bail out and warn user of invalid ciphertext hex-encoded string format
+            // TODO: bail out and warn user of invalid ciphertext hex-encoded string format
             return;
         }
 
         if (publicKeyHexString.Length != 64 || privateKeyHexStringRef10.Length != 128)
         {
-    // TODO: bail out and warn user of invalid key parameters
+            // TODO: bail out and warn user of invalid key parameters
             return;
         }
 
