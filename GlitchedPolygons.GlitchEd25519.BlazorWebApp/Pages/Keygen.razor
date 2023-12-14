@@ -2,6 +2,7 @@
 @using GlitchEd25519 = global::GlitchEd25519
 @using System.Security.Cryptography
 @using GlitchedPolygons.ExtensionMethods
+@inject IJSRuntime JSRuntime
 
 <PageTitle>
     GlitchEd25519 - Keygen
@@ -100,14 +101,16 @@
         CryptographicOperations.ZeroMemory(additionalEntropyBytes);
     }
 
-    private void CopyPublicKey()
+    private async Task CopyPublicKey()
     {
-    // TODO
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", publicKeyHexString);
+        await JSRuntime.InvokeVoidAsync("alert", "Copied public key to clipboard. Send this to your recipient :)");
     }
 
-    private void CopyPrivateKey()
+    private async Task CopyPrivateKey()
     {
-    // TODO
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", privateKeyHexString);
+        await JSRuntime.InvokeVoidAsync("alert", "Copied private key to clipboard. Keep this safe and secret; DO NOT SHARE!");
     }
 
 }
