@@ -149,11 +149,24 @@
         
         isMouseDown = true;   
         
-        [x, y] = 
-        [
-            event.changedTouches ? event.changedTouches[0].clientX : event.offsetX, 
-            event.changedTouches ? event.changedTouches[0].clientY : event.offsetY
-        ];  
+        if (event.changedTouches)
+        {
+            const boundingRect = paintCanvas.getBoundingClientRect();
+            
+            [x, y] = 
+            [
+                event.changedTouches[0].clientX - boundingRect.left,
+                event.changedTouches[0].clientY - boundingRect.top 
+            ];  
+        }
+        else
+        {
+            [x, y] = 
+            [
+                event.offsetX, 
+                event.offsetY
+            ];  
+        }
     }
     
     const drawLine = event => 
@@ -162,8 +175,15 @@
         
         if (isMouseDown) 
         {
-            const newX = event.changedTouches ? event.changedTouches[0].clientX : event.offsetX;
-            const newY = event.changedTouches ? event.changedTouches[0].clientY : event.offsetY;
+            const boundingRect = paintCanvas.getBoundingClientRect();
+            
+            const newX = event.changedTouches 
+                ? event.changedTouches[0].clientX - boundingRect.left 
+                : event.offsetX;
+            
+            const newY = event.changedTouches 
+                ? event.changedTouches[0].clientY - boundingRect.top 
+                : event.offsetY;
             
             context.beginPath();
             context.moveTo(x, y);
