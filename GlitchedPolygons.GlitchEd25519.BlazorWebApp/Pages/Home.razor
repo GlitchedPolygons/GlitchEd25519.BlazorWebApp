@@ -285,9 +285,15 @@
             return;
         }
 
-        if (publicKeyHexString.Length != 64 || privateKeyHexStringRef10.Length != 128)
+        if (publicKeyHexString.Length != 64)
         {
-            // TODO: bail out and warn user of invalid key parameters
+            encryptionCiphertext = "ERROR: Invalid public key parameter. Please make sure to only use valid Ed25519 public keys (as hex-encoded strings).";
+            return;
+        }
+        
+        if (privateKeyHexStringRef10.Length != 128)
+        {
+            encryptionCiphertext = "ERROR: Invalid private key parameter. Please make sure to only use valid Ed25519 private keys in the Ref10/SUPERCOP format (as hex-encoded strings).";
             return;
         }
 
@@ -362,13 +368,19 @@
 
         if (decryptionCiphertext.Length % 2 != 0)
         {
-            // TODO: bail out and warn user of invalid ciphertext hex-encoded string format
+            decryptionPlaintext = "ERROR: Decryption failed. Invalid ciphertext! Hex-encoded strings are always divisible by two in size. Did you maybe not paste in the entire ciphertext? Sometimes it's easy to miss just one character at the start or end of the ciphertext...";
             return;
         }
 
-        if (publicKeyHexString.Length != 64 || privateKeyHexStringRef10.Length != 128)
+        if (publicKeyHexString.Length != 64)
         {
-            // TODO: bail out and warn user of invalid key parameters
+            decryptionPlaintext = "ERROR: Invalid public key parameter. Please make sure to only use valid Ed25519 public keys (as hex-encoded strings).";
+            return;
+        }
+        
+        if (privateKeyHexStringRef10.Length != 128)
+        {
+            decryptionPlaintext = "ERROR: Invalid private key parameter. Please make sure to only use valid Ed25519 private keys in the Ref10/SUPERCOP format (as hex-encoded strings).";
             return;
         }
 
@@ -441,6 +453,6 @@
 
     private async Task PasteDecryptionCiphertextFromClipboard()
     {
-        decryptionCiphertext = await JSRuntime.InvokeAsync<string>("navigator.clipboard.readText");
+        decryptionCiphertext = await JSRuntime.InvokeAsync<string>("navigator.clipboard.readText"); // TODO: find out why this does not work
     }
 }
