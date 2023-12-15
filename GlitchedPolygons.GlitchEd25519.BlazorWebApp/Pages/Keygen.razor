@@ -248,14 +248,17 @@
         if (windowDimensions.width < 641)
         {
             paintCanvas.width = windowDimensions.width - 50;
+            paintCanvas.height = 256;
         }
         else if (windowDimensions.width < 1250)
         {
             paintCanvas.width = windowDimensions.width - 260;
+            paintCanvas.height = 384;
         }
         else
         {
             paintCanvas.width = 1024;
+            paintCanvas.height = 512;
         }
         
         configContext();
