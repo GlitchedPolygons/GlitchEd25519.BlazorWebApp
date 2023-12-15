@@ -101,13 +101,15 @@
     </button>
 
     <button class="btn btn-primary stretch-when-narrow"
-            style="padding-left: 24px; padding-right: 24px;"
+            id="copyPublicKeyButton"
+            style="padding-left: 24px; padding-right: 24px; min-width: 162px;"
             @onclick="CopyPublicKey">
         Copy public key
     </button>
 
     <button class="btn btn-primary stretch-when-narrow"
-            style="padding-left: 24px; padding-right: 24px;"
+            id="copyPrivateKeyButton"
+            style="padding-left: 24px; padding-right: 24px; min-width: 162px;"
             @onclick="CopyPrivateKey">
         Copy private key
     </button>
@@ -174,6 +176,26 @@
     paintCanvas.addEventListener('mousemove', drawLine);
     paintCanvas.addEventListener('mouseup', stopDrawing);
     paintCanvas.addEventListener('mouseout', stopDrawing);
+    
+    const copyPublicKeyButton = document.getElementById('copyPublicKeyButton');
+    const defaultLabelCopyPublicKeyButton = copyPublicKeyButton.innerHTML;
+    
+    const copyPrivateKeyButton = document.getElementById('copyPrivateKeyButton');
+    const defaultLabelCopyPrivateKeyButton = copyPrivateKeyButton.innerHTML;
+        
+    copyPublicKeyButton.addEventListener('click', () => 
+    {
+        copyPublicKeyButton.innerHTML = 'Copied...';
+        
+        setTimeout(() => copyPublicKeyButton.innerHTML = defaultLabelCopyPublicKeyButton, 1337);
+    });
+    
+    copyPrivateKeyButton.addEventListener('click', () => 
+    {
+        copyPrivateKeyButton.innerHTML = 'Copied...';
+        
+        setTimeout(() => copyPrivateKeyButton.innerHTML = defaultLabelCopyPrivateKeyButton, 1337);
+    });
     
     keygenButton.addEventListener('click', clearCanvas);
     
@@ -277,7 +299,7 @@
     private async Task CopyPublicKey()
     {
         await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", publicKeyHexString);
-        await JSRuntime.InvokeVoidAsync("alert", "Copied public key to clipboard. Send this to your recipient :)");
+        //await JSRuntime.InvokeVoidAsync("alert", "Copied public key to clipboard. Send this to your recipient :)");
     }
 
     private async Task CopyPrivateKey()
@@ -285,5 +307,4 @@
         await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", privateKeyHexString);
         await JSRuntime.InvokeVoidAsync("alert", "Copied private key to clipboard. Keep this safe and secret; DO NOT SHARE!");
     }
-
 }

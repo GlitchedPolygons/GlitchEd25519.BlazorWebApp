@@ -221,7 +221,8 @@
             </button>
 
             <button class="btn btn-primary stretch-when-narrow"
-                    style="padding-left: 24px; padding-right: 24px;"
+                    style="padding-left: 24px; padding-right: 24px; min-width: 162px;"
+                    id="copyCiphertextButton"
                     @onclick="CopyEncryptionCiphertextToClipboard">
                 Copy ciphertext
             </button>
@@ -263,6 +264,19 @@
         </div>
     </div>
 </div>
+
+<script type="text/javascript">
+    
+    const copyCiphertextButton = document.getElementById('copyCiphertextButton');
+    const defaultLabelCopyCiphertextButton = copyCiphertextButton.innerHTML;
+    
+    copyCiphertextButton.addEventListener('click', () => 
+    {
+        copyCiphertextButton.innerHTML = 'Copied...';
+        
+        setTimeout(() => copyCiphertextButton.innerHTML = defaultLabelCopyCiphertextButton, 1337);
+    });
+</script>
 
 @code
 {
@@ -315,16 +329,16 @@
 
             AesEngine aesEngine = new();
             GcmBlockCipher aesGcm = new(aesEngine);
-            AeadParameters parameters = new(new KeyParameter(aesGcmKeyBytes), Constants.AesGcm.MAC_SIZE_BYTES, nonceBytes, null);
+            AeadParameters parameters = new(new KeyParameter(aesGcmKeyBytes), 8 * Constants.AesGcm.MAC_SIZE_BYTES, nonceBytes, null);
 
             aesGcm.Init(true, parameters);
 
             Span<byte> plaintextBytes = encryptionPlaintext.UTF8GetBytes();
             Span<byte> ciphertextBytes = new byte[aesGcm.GetOutputSize(plaintextBytes.Length)];
 
-            int processedBytes = aesGcm.ProcessBytes(plaintextBytes, ciphertextBytes);
+            int n = aesGcm.ProcessBytes(plaintextBytes, ciphertextBytes);
 
-            aesGcm.DoFinal(ciphertextBytes);
+            aesGcm.DoFinal(ciphertextBytes[n..]);
 
             GlitchEd25519.SignRef10(ref signatureBytes, ciphertextBytes, privateKeyBytesRef10);
 
@@ -413,15 +427,15 @@
 
             AesEngine aesEngine = new();
             GcmBlockCipher cipher = new(aesEngine);
-            AeadParameters parameters = new AeadParameters(new KeyParameter(aesGcmKeyBytes), Constants.AesGcm.MAC_SIZE_BYTES, nonceBytes, null);
+            AeadParameters parameters = new AeadParameters(new KeyParameter(aesGcmKeyBytes), 8 * Constants.AesGcm.MAC_SIZE_BYTES, nonceBytes, null);
 
             cipher.Init(false, parameters);
 
             Span<byte> plaintextBytes = new byte[cipher.GetOutputSize(ciphertextBytes.Length)];
 
-            int processedBytes = cipher.ProcessBytes(ciphertextBytes, plaintextBytes);
+            int n = cipher.ProcessBytes(ciphertextBytes, plaintextBytes);
 
-            cipher.DoFinal(plaintextBytes);
+            cipher.DoFinal(plaintextBytes[n..]);
 
             decryptionPlaintext =
                 signatureValid
@@ -448,7 +462,6 @@
     private async Task CopyEncryptionCiphertextToClipboard()
     {
         await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", encryptionCiphertext);
-        await JSRuntime.InvokeVoidAsync("alert", "Copied encrypted message to clipboard. Send this to your recipient :)");
     }
 
     private async Task PasteDecryptionCiphertextFromClipboard()
