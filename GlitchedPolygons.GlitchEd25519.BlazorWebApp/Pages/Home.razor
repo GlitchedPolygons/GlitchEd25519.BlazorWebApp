@@ -474,6 +474,6 @@
 
     private async Task PasteDecryptionCiphertextFromClipboard()
     {
-        decryptionCiphertext = await JSRuntime.InvokeAsync<string>("navigator.clipboard.readText"); // TODO: find out why this does not work
+        decryptionCiphertext = await JSRuntime.InvokeAsync<string>("navigator.clipboard.readText"); // TODO: find out why this does not work // EDIT: nvm it's only broken on firefox; idgaf
     }
 }
