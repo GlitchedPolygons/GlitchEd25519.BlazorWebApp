@@ -111,3 +111,9 @@ a, .btn-link {
 code {
     color: #c02d76;
 }
+
+.paint-canvas {
+    border: 1px black solid;
+    display: block;
+    margin-top: 0.5rem;
+}

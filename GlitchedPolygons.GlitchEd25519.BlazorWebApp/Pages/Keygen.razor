@@ -2,6 +2,7 @@
 @using GlitchEd25519 = global::GlitchEd25519
 @using System.Security.Cryptography
 @using GlitchedPolygons.ExtensionMethods
+@using GlitchedPolygons.GlitchEd25519.BlazorWebApp.ExtensionMethods
 @inject IJSRuntime JSRuntime
 
 <PageTitle>
@@ -21,58 +22,90 @@
 @if (DEBUG)
 {
     <p role="status">
-        Generated seed: @seed
+        Generated seed: <code style="word-wrap: anywhere">@seed</code>
+    </p>
+    
+    <p role="status">
+        Additional entropy hash: <code style="word-wrap: anywhere">@additionalEntropy</code>
     </p>
 }
 
 <p role="status">
-    Generated public key hex string: @publicKeyHexString
+    Generated public key hex string: <code style="word-wrap: anywhere">@publicKeyHexString</code>
 </p>
 
 <p role="status">
     Generated private key hex string:
     @if (privateKeyHexString.NotNullNotEmpty())
     {
-        <i>(censored)</i>
+        <code><i>(censored)</i></code>
     }
 </p>
 
 <p>
-    Once generated, the keys will be displayed to you here <strong>ONLY ONCE!</strong> If you navigate away from this page or close this tab, the keys will be gone!
+    Once generated, the keys will be displayed to you here <strong>ONLY ONCE!</strong> 
+    If you navigate away from this page or close this tab, the keys will be gone! 
+</p>
+
+<p>
+    Clicking on the key pair generation button more than once will overwrite the previous key pair <strong>without a warning</strong>.
 </p>
 
 <p>
     Therefore: <strong>make sure to save both your public and private key somewhere safe and secret!</strong>
 </p>
 
+<br />
+
 <div class="form-group">
 
-    <label class="col-form-label mt-4"
+    <label class="col-form-label"
            for="publicKey">
-        Additional entropy
+        Additional entropy @(additionalEntropyCRC32.HasValue ? $"(CRC-32: {additionalEntropyCRC32.Value})" : "")
     </label>
 
     <input type="text"
            id="publicKey"
            class="form-control"
            onClick="this.select();"
+           style="max-width: 1024px"
            placeholder="Go ahead, go nuts! Smash your keyboard, hack in some random shit here :D"
-           @bind="additionalEntropy">
+           @oninput="OnAddAdditionalEntropy">
 </div>
+
+<br />
+
+<label>
+    Draw something nice down below. Unleash your creativity or something ;D
+</label>
+
+<br />
+
+<canvas class="js-paint paint-canvas"
+        style="border: 1px #d2d2d2 solid; border-radius: 4px;"
+        width="1024"
+        height="512">
+</canvas>
+
+<input type="hidden"
+       tabindex="-2"
+       id="paintCanvasEntropy" 
+       @oninput="OnAddAdditionalEntropy"/>
 
 <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem">
     <button class="btn btn-primary stretch-when-narrow"
+            id="keygenButton"
             style="padding-left: 24px; padding-right: 24px;"
             @onclick="GenerateNewKeypair">
         Generate key pair
     </button>
-    
+
     <button class="btn btn-primary stretch-when-narrow"
             style="padding-left: 24px; padding-right: 24px;"
             @onclick="CopyPublicKey">
         Copy public key
     </button>
-    
+
     <button class="btn btn-primary stretch-when-narrow"
             style="padding-left: 24px; padding-right: 24px;"
             @onclick="CopyPrivateKey">
@@ -80,12 +113,106 @@
     </button>
 </div>
 
+<script type="text/javascript">
+
+    const keygenButton = document.getElementById('keygenButton');
+    
+    const entropy = document.getElementById('paintCanvasEntropy');
+    const paintCanvas = document.querySelector('.js-paint');
+    const context = paintCanvas.getContext('2d');
+  
+    let x = 0, y = 0;
+    let isMouseDown = false;
+    
+    const configContext = () =>
+    {
+        context.strokeStyle = '#401bc2';
+        context.lineCap = 'round';
+        context.lineWidth = 4;
+    }
+    
+    configContext();
+    
+    const stopDrawing = () => 
+    { 
+        isMouseDown = false; 
+    }
+    
+    const startDrawing = event => 
+    {
+       isMouseDown = true;   
+       [x, y] = [event.offsetX, event.offsetY];  
+    }
+    
+    const drawLine = event => 
+    {
+        if (isMouseDown) 
+        {
+            const newX = event.offsetX;
+            const newY = event.offsetY;
+            
+            context.beginPath();
+            context.moveTo(x, y);
+            context.lineTo(newX, newY);
+            context.stroke();
+            
+            x = newX;
+            y = newY;
+            
+            entropy.value = newX + newY;
+            entropy.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
+    
+    const clearCanvas = () => 
+    {
+        context.clearRect(0, 0, paintCanvas.width, paintCanvas.height);
+        //setTimeout(() => context.clearRect(0, 0, paintCanvas.width, paintCanvas.height), 2048);
+    }
+    
+    paintCanvas.addEventListener('mousedown', startDrawing);
+    paintCanvas.addEventListener('mousemove', drawLine);
+    paintCanvas.addEventListener('mouseup', stopDrawing);
+    paintCanvas.addEventListener('mouseout', stopDrawing);
+    
+    keygenButton.addEventListener('click', clearCanvas);
+    
+    const onResize = function(event) 
+    {
+        const windowDimensions = 
+        {
+            width: window.innerWidth,
+            height: window.innerHeight
+        };
+        
+        if (windowDimensions.width < 641)
+        {
+            paintCanvas.width = windowDimensions.width - 50;
+        }
+        else if (windowDimensions.width < 1250)
+        {
+            paintCanvas.width = windowDimensions.width - 260;
+        }
+        else
+        {
+            paintCanvas.width = 1024;
+        }
+        
+        configContext();
+    };
+    
+    window.addEventListener('resize', onResize, true);
+    
+    onResize(null);
+    
+</script>
+
 @code {
 
     private readonly bool aesGcmSupported = AesGcm.IsSupported;
 
 #if DEBUG
-        private const bool DEBUG = true;
+    private const bool DEBUG = true;
 #else
         private const bool DEBUG = false;
 #endif
@@ -94,6 +221,22 @@
     private string additionalEntropy = string.Empty;
     private string publicKeyHexString = string.Empty;
     private string privateKeyHexString = string.Empty;
+
+    private uint? additionalEntropyCRC32 = null;
+
+    private void OnAddAdditionalEntropy(ChangeEventArgs eventArgs)
+    {
+        additionalEntropy = (additionalEntropy + eventArgs.Value).SHA512();
+
+        if (additionalEntropy.NullOrEmpty())
+        {
+            additionalEntropyCRC32 = null;
+        }
+        else
+        {
+            additionalEntropyCRC32 = additionalEntropy.CRC32();
+        }
+    }
 
     private void GenerateNewKeypair()
     {
@@ -122,6 +265,9 @@
         publicKeyHexString = Convert.ToHexString(generatedPublicKey);
         privateKeyHexString = Convert.ToHexString(generatedPrivateKey);
 
+        additionalEntropy = string.Empty;
+        additionalEntropyCRC32 = null;
+        
         CryptographicOperations.ZeroMemory(generatedSeed);
         CryptographicOperations.ZeroMemory(generatedPublicKey);
         CryptographicOperations.ZeroMemory(generatedPrivateKey);
