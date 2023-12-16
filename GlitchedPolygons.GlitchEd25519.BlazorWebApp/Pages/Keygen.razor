@@ -61,7 +61,7 @@
 
     <label class="col-form-label"
            for="publicKey">
-        Additional entropy @(additionalEntropyCRC32.HasValue ? $"(CRC-32: {additionalEntropyCRC32.Value})" : "")
+        Additional entropy <code>@(additionalEntropyCRC32.HasValue ? $"(CRC-32: {additionalEntropyCRC32.Value})" : "")</code>
     </label>
 
     <input type="text"

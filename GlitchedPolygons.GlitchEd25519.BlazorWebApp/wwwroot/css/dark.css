@@ -82,3 +82,13 @@ code {
     background: #22313F !important;
     color: #fff !important;
 }
+
+#topnavbar {
+    border: none;
+    background-color: #1d1d1d;
+}
+
+.paint-canvas {
+    background-color: #1d1d1d;
+    border: 1px #4e4e4e solid !important;
+}
