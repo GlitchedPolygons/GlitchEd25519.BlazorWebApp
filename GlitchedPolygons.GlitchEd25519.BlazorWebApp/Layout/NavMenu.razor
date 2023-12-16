@@ -1,10 +1,11 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using System.Reflection
+<div class="top-row ps-3 navbar navbar-dark">
     
     <div class="container-fluid">
 
         <a class="navbar-brand"
            href="">
-            GlitchEd25519
+            GlitchEd25519 &nbsp; @(versionNumber is null ? string.Empty : $" v{versionNumber.Major}.{versionNumber.Minor}")
         </a>
 
         <button title="Navigation menu"
@@ -54,6 +55,8 @@
 
 @code {
     private bool collapseNavMenu = true;
+
+    private readonly Version? versionNumber = Assembly.GetExecutingAssembly()?.GetName()?.Version;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
