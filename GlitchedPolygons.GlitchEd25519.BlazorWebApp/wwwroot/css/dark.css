@@ -75,6 +75,11 @@ code {
     background-color: #1174a6 !important;
 }
 
+.btn-primary:disabled {
+    background-color: #3894c1bd;
+    border-color: #569bb09e;
+    color: #ffffffb5;
+}
 
 .table tbody tr:hover,
 .table tbody tr:hover td,
