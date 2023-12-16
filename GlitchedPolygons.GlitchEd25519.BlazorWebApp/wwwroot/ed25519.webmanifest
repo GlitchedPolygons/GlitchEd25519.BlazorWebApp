@@ -1,7 +1,7 @@
 {
   "name": "GlitchEd25519",
   "short_name": "GlitchEd25519",
-  "description": "",
+  "description": "Zero-knowledge asymmetric encryption PWA (static and works offline) using AES-256 (GCM) cipher and Ed25519",
   "icons": [
     {
       "src": "icon-192.png",
