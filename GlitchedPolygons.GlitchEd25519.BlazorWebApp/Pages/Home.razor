@@ -218,12 +218,14 @@
 
         <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem">
             <button class="btn btn-primary stretch-when-narrow"
+                    disabled="@(encryptionPlaintext.NullOrEmpty() || privateKeyHexStringRef10.NullOrEmpty() || publicKeyHexString.NullOrEmpty())"
                     style="padding-left: 24px; padding-right: 24px;"
                     @onclick="EncryptString">
                 Encrypt
             </button>
 
             <button class="btn btn-primary stretch-when-narrow"
+                    disabled="@(encryptionCiphertext.NullOrEmpty() || encryptionCiphertext.Contains("error", StringComparison.InvariantCultureIgnoreCase))"
                     style="padding-left: 24px; padding-right: 24px; min-width: 162px;"
                     id="copyCiphertextButton"
                     @onclick="CopyEncryptionCiphertextToClipboard">
@@ -254,6 +256,7 @@
 
         <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem">
             <button class="btn btn-primary stretch-when-narrow"
+                    disabled="@(decryptionCiphertext.NullOrEmpty() || privateKeyHexStringRef10.NullOrEmpty() || publicKeyHexString.NullOrEmpty())"
                     style="padding-left: 24px; padding-right: 24px;"
                     @onclick="DecryptString">
                 Decrypt
@@ -273,19 +276,6 @@
 
 </div>
 
-<script type="text/javascript">
-    
-    const copyCiphertextButton = document.getElementById('copyCiphertextButton');
-    const defaultLabelCopyCiphertextButton = copyCiphertextButton.innerHTML;
-    
-    copyCiphertextButton.addEventListener('click', () => 
-    {
-        copyCiphertextButton.innerHTML = 'Copied...';
-        
-        setTimeout(() => copyCiphertextButton.innerHTML = defaultLabelCopyCiphertextButton, 1337);
-    });
-</script>
-
 @code
 {
     private readonly bool aesGcmSupported = AesGcm.IsSupported;
@@ -299,6 +289,14 @@
 
     private string publicKeyHexString = string.Empty;
     private string privateKeyHexStringRef10 = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("InitCopyButtonLabel", "copyCiphertextButton");
+        }
+    }
 
     private void EncryptString()
     {
