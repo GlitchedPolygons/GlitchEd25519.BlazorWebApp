@@ -113,7 +113,7 @@ function InitKeygen()
         }
         else if (windowDimensions.width < 1250)
         {
-            paintCanvas.width = windowDimensions.width - 280;
+            paintCanvas.width = windowDimensions.width - 290;
             paintCanvas.height = 384;
         }
         else
