@@ -103,6 +103,10 @@ code {
     border: 1px #f0f8ff38 solid;
 }
 
+#encrypt-tab:focus, #decrypt-tab:focus {
+    color: white;
+}
+
 .nav-tabs {
     border-bottom: 1px solid #dee2e638;
 }

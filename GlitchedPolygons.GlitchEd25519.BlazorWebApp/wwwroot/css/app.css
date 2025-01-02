@@ -117,3 +117,19 @@ code {
     display: block;
     margin-top: 0.5rem;
 }
+
+dialog {
+    background: transparent;
+    border: none;
+}
+
+dialog::backdrop {
+    background-image: linear-gradient( 45deg, #231023, #43246199, #044965, #230420 );
+    opacity: 0.75;
+}
+
+.keyring {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
