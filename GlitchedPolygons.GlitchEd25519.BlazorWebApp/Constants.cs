@@ -26,4 +26,18 @@ public static class Constants
         public const int TAG_SIZE_BYTES = 16;
         public const int KEY_SIZE_BYTES = 32;
     }
+    
+    public static class InteropFunctionNames
+    {
+        public const string PROMPT = "prompt";
+        public const string GET_LOCALSTORAGE_VALUE = "localStorage.getItem";
+        public const string SET_LOCALSTORAGE_VALUE = "localStorage.setItem";
+        public const string REMOVE_LOCALSTORAGE_VALUE = "localStorage.removeItem";
+    }
+    
+    public static class LocalStorageIds
+    {
+        public const string USER_DATA = "UserData";
+        public const string DARK_THEME = "DarkTheme";
+    }
 }

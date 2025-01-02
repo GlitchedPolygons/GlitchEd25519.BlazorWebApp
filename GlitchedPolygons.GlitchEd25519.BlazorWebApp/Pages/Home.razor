@@ -1,10 +1,13 @@
 ﻿@page "/"
 
 @inject IJSRuntime JSRuntime
+@inject IUserDataService UserDataService
 
 @using System.Security.Cryptography
 @using System.Text
 @using GlitchedPolygons.ExtensionMethods
+@using GlitchedPolygons.GlitchEd25519.BlazorWebApp.Models
+@using GlitchedPolygons.GlitchEd25519.BlazorWebApp.Services
 @using Org.BouncyCastle.Crypto.Engines
 @using Org.BouncyCastle.Crypto.Modes
 @using Org.BouncyCastle.Crypto.Parameters
@@ -18,263 +21,290 @@
     Encrypt / Decrypt
 </h1>
 
-<br />
+<br/>
 
 <div style="max-width: 888px;">
 
-<div class="accordion"
-     id="accordion">
-    <div class="accordion-item">
-        <h2 class="accordion-header"
-            id="headingOne">
-            <button class="accordion-button collapsed"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#collapseOne"
-                    aria-expanded="false"
-                    aria-controls="collapseOne">
-                Cipher information
-            </button>
-        </h2>
-        <div id="collapseOne"
-             class="accordion-collapse collapse"
-             aria-labelledby="headingOne"
-             data-bs-parent="#accordion">
-            <div class="accordion-body">
-                <ul>
-                    <li class="mt-3">
-                        Encryption technique:
-                        <ul>
-                            <li>
-                                <a href="https://en.wikipedia.org/wiki/Public-key_cryptography"
-                                   target="_blank">
-                                    Asymmetric
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
+    <div class="accordion"
+         id="accordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header"
+                id="headingOne">
+                <button class="accordion-button collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseOne"
+                        aria-expanded="false"
+                        aria-controls="collapseOne">
+                    Cipher information
+                </button>
+            </h2>
+            <div id="collapseOne"
+                 class="accordion-collapse collapse"
+                 aria-labelledby="headingOne"
+                 data-bs-parent="#accordion">
+                <div class="accordion-body">
+                    <ul>
+                        <li class="mt-3">
+                            Encryption technique:
+                            <ul>
+                                <li>
+                                    <a href="https://en.wikipedia.org/wiki/Public-key_cryptography"
+                                       target="_blank">
+                                        Asymmetric
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
 
-                    <li class="mt-3">
-                        Digital signature scheme:
-                        <ul>
-                            <li>
-                                <a href="https://en.wikipedia.org/wiki/EdDSA"
-                                   target="_blank">
-                                    EdDSA
-                                </a>
-                                <a href="https://en.wikipedia.org/wiki/EdDSA#Ed25519"
-                                   target="_blank">
-                                    (Ed25519)
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
+                        <li class="mt-3">
+                            Digital signature scheme:
+                            <ul>
+                                <li>
+                                    <a href="https://en.wikipedia.org/wiki/EdDSA"
+                                       target="_blank">
+                                        EdDSA
+                                    </a>
+                                    <a href="https://en.wikipedia.org/wiki/EdDSA#Ed25519"
+                                       target="_blank">
+                                        (Ed25519)
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
 
-                    <li class="mt-3">
-                        Underlying block cipher:
-                        <ul>
-                            <li>
-                                <a href="https://en.wikipedia.org/wiki/Advanced_Encryption_Standard"
-                                   target="_blank">
-                                    AES-256
-                                </a>
-                                <a href="https://en.wikipedia.org/wiki/Galois/Counter_Mode"
-                                   target="_blank">
-                                    (in Galois/Counter Mode)
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
+                        <li class="mt-3">
+                            Underlying block cipher:
+                            <ul>
+                                <li>
+                                    <a href="https://en.wikipedia.org/wiki/Advanced_Encryption_Standard"
+                                       target="_blank">
+                                        AES-256
+                                    </a>
+                                    <a href="https://en.wikipedia.org/wiki/Galois/Counter_Mode"
+                                       target="_blank">
+                                        (in Galois/Counter Mode)
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
 
-                    <li class="mt-3">
-                        Used crypto library:
-                        <ul>
-                            <li>
-                                <a href="https://www.nuget.org/packages/Portable.BouncyCastle"
-                                   target="_blank">
-                                    Portable.BouncyCastle
-                                </a>
-                                <ul>
-                                    <li>
-                                        <a href="https://www.bouncycastle.org/csharp/licence.html"
-                                           target="_blank">
-                                            Free and open-source (MIT-licensed)
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
+                        <li class="mt-3">
+                            Used crypto library:
+                            <ul>
+                                <li>
+                                    <a href="https://www.nuget.org/packages/Portable.BouncyCastle"
+                                       target="_blank">
+                                        Portable.BouncyCastle
+                                    </a>
+                                    <ul>
+                                        <li>
+                                            <a href="https://www.bouncycastle.org/csharp/licence.html"
+                                               target="_blank">
+                                                Free and open-source (MIT-licensed)
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
 
-                    <li class="mt-3">
-                        Built-in .NET AES-256 GCM cipher supported: @aesGcmSupported
-                    </li>
+                        <li class="mt-3">
+                            Built-in .NET AES-256 GCM cipher supported: @aesGcmSupported
+                        </li>
 
-                    <li class="mt-3 mb-0">
-                        This site is 100% open-source (full source code available
-                        <a href="https://github.com/GlitchedPolygons/GlitchEd25519.BlazorWebApp"
-                           target="_blank">
-                            <span>here</span>
-                        </a>), static, sends no data, saves no data and works entirely offline.
-                        <ul>
-                            <li>
-                                <a href="https://github.com/GlitchedPolygons/GlitchEd25519.BlazorWebApp/blob/master/LICENSE"
-                                   target="_blank">
-                                    GPL-3.0 license
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
+                        <li class="mt-3 mb-0">
+                            This site is 100% open-source (full source code available
+                            <a href="https://github.com/GlitchedPolygons/GlitchEd25519.BlazorWebApp"
+                               target="_blank">
+                                <span>here</span>
+                            </a>), static, sends no data, saves no data and works entirely offline.
+                            <ul>
+                                <li>
+                                    <a href="https://github.com/GlitchedPolygons/GlitchEd25519.BlazorWebApp/blob/master/LICENSE"
+                                       target="_blank">
+                                        GPL-3.0 license
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="form-group">
+    <div class="form-group">
 
-    <label class="col-form-label mt-4"
-           for="privateKey">
-        Private key (sender)
-    </label>
+        <label class="col-form-label mt-4"
+               for="privateKey">
+            Private key (sender)
+        </label>
 
-    <input type="password"
-           id="privateKey"
-           class="form-control"
-           onClick="this.select();"
-           placeholder="Hex-encoded Ed25519 private key string (Ref10 format)"
-           @bind="privateKeyHexStringRef10">
-</div>
+        <input type="password"
+               id="privateKey"
+               class="form-control"
+               onClick="this.select();"
+               placeholder="Hex-encoded Ed25519 private key string (Ref10 format)"
+               @bind="privateKeyHexStringRef10">
+    </div>
 
-<div class="form-group">
+    <div class="form-group">
 
-    <label class="col-form-label mt-4"
-           for="publicKey">
-        Public key (recipient)
-    </label>
+        <label class="col-form-label mt-4"
+               for="publicKey">
+            Public key (recipient)
+        </label>
 
-    <input type="text"
-           id="publicKey"
-           class="form-control"
-           onClick="this.select();"
-           placeholder="Hex-encoded Ed25519 public key string"
-           @bind="publicKeyHexString">
-</div>
+        <div class="input-group mb-3">
 
-<br />
+            <button class="btn btn-primary"
+                    type="button"
+                    style="padding-left: 16px; padding-right: 16px;"
+                    id="buttonLoadPublicKey">
+                Load
+            </button>
+            
+            <input type="text"
+                   class="form-control"
+                   id="publicKey"
+                   onClick="this.select();"
+                   placeholder="Hex-encoded Ed25519 public key string"
+                   @bind="publicKeyHexString">
 
-<ul class="nav nav-tabs mt-4"
-    role="tablist">
-
-    <li class="nav-item"
-        role="presentation">
-
-        <a class="nav-link active"
-           data-bs-toggle="tab"
-           aria-selected="false"
-           href="#encrypt"
-           role="tab"
-           id="encrypt-tab"
-           tabindex="-1">
-            Encrypt
-        </a>
-    </li>
-
-    <li class="nav-item"
-        role="presentation">
-
-        <a class="nav-link"
-           data-bs-toggle="tab"
-           aria-selected="true"
-           href="#decrypt"
-           role="tab"
-           id="decrypt-tab">
-            Decrypt
-        </a>
-    </li>
-</ul>
-
-<div id="myTabContent"
-     style="margin-bottom: 64px"
-     class="tab-content">
-
-    <div class="tab-pane fade active show"
-         id="encrypt"
-         role="tabpanel">
-
-        <div class="form-group">
-            <label for="message"
-                   class="form-label mt-4">
-                Message
-            </label>
-            <textarea class="form-control" id="message" rows="4" @bind="encryptionPlaintext"></textarea>
+            <button class="btn btn-primary"
+                    type="button"
+                    style="padding-left: 16px; padding-right: 16px;"
+                    disabled="@(publicKeyHexString.NullOrEmpty())"
+                    @onclick="SavePublicKey"
+                    id="buttonSavePublicKey">
+                Save
+            </button>
         </div>
+    </div>
 
-        <div class="form-group">
-            <label for="ciphertext"
-                   class="form-label mt-4">
-                Ciphertext
-            </label>
-            <textarea class="form-control" id="ciphertext" rows="4" onClick="this.select();" @bind="encryptionCiphertext" readonly></textarea>
-        </div>
+    <dialog open>
+        <p>Greetings, one and all!</p>
+        <form method="dialog">
+            <button>OK</button>
+        </form>
+    </dialog>
 
-        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem">
-            <button class="btn btn-primary stretch-when-narrow"
-                    disabled="@(encryptionPlaintext.NullOrEmpty() || privateKeyHexStringRef10.NullOrEmpty() || publicKeyHexString.NullOrEmpty())"
-                    style="padding-left: 24px; padding-right: 24px;"
-                    @onclick="EncryptString">
+
+    <br/>
+
+    <ul class="nav nav-tabs mt-4"
+        role="tablist">
+
+        <li class="nav-item"
+            role="presentation">
+
+            <a class="nav-link active"
+               data-bs-toggle="tab"
+               aria-selected="false"
+               href="#encrypt"
+               role="tab"
+               id="encrypt-tab"
+               tabindex="-1">
                 Encrypt
-            </button>
+            </a>
+        </li>
 
-            <button class="btn btn-primary stretch-when-narrow"
-                    disabled="@(encryptionCiphertext.NullOrEmpty() || encryptionCiphertext.Contains("error", StringComparison.InvariantCultureIgnoreCase))"
-                    style="padding-left: 24px; padding-right: 24px; min-width: 162px;"
-                    id="copyCiphertextButton"
-                    @onclick="CopyEncryptionCiphertextToClipboard">
-                Copy ciphertext
-            </button>
-        </div>
-    </div>
+        <li class="nav-item"
+            role="presentation">
 
-    <div class="tab-pane fade"
-         id="decrypt"
-         role="tabpanel">
-
-        <div class="form-group">
-            <label for="decryptionCiphertext"
-                   class="form-label mt-4">
-                Ciphertext
-            </label>
-            <textarea class="form-control" id="decryptionCiphertext" rows="4" onClick="this.select();" @bind="decryptionCiphertext"></textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="decryptedMessage"
-                   class="form-label mt-4">
-                Message
-            </label>
-            <textarea class="form-control" id="decryptedMessage" rows="4" @bind="decryptionPlaintext"></textarea>
-        </div>
-
-        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem">
-            <button class="btn btn-primary stretch-when-narrow"
-                    disabled="@(decryptionCiphertext.NullOrEmpty() || privateKeyHexStringRef10.NullOrEmpty() || publicKeyHexString.NullOrEmpty())"
-                    style="padding-left: 24px; padding-right: 24px;"
-                    @onclick="DecryptString">
+            <a class="nav-link"
+               data-bs-toggle="tab"
+               aria-selected="true"
+               href="#decrypt"
+               role="tab"
+               id="decrypt-tab">
                 Decrypt
-            </button>
+            </a>
+        </li>
+    </ul>
 
-            <button class="btn btn-primary stretch-when-narrow"
-                    style="padding-left: 24px; padding-right: 24px;"
-                    @onclick="PasteDecryptionCiphertextFromClipboard">
-                Paste ciphertext
-            </button>
+    <div id="myTabContent"
+         style="margin-bottom: 64px"
+         class="tab-content">
+
+        <div class="tab-pane fade active show"
+             id="encrypt"
+             role="tabpanel">
+
+            <div class="form-group">
+                <label for="message"
+                       class="form-label mt-4">
+                    Message
+                </label>
+                <textarea class="form-control" id="message" rows="4" @bind="encryptionPlaintext"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="ciphertext"
+                       class="form-label mt-4">
+                    Ciphertext
+                </label>
+                <textarea class="form-control" id="ciphertext" rows="4" onClick="this.select();" @bind="encryptionCiphertext" readonly></textarea>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem">
+                <button class="btn btn-primary stretch-when-narrow"
+                        disabled="@(encryptionPlaintext.NullOrEmpty() || privateKeyHexStringRef10.NullOrEmpty() || publicKeyHexString.NullOrEmpty())"
+                        style="padding-left: 24px; padding-right: 24px;"
+                        @onclick="EncryptString">
+                    Encrypt
+                </button>
+
+                <button class="btn btn-primary stretch-when-narrow"
+                        disabled="@(encryptionCiphertext.NullOrEmpty() || encryptionCiphertext.Contains("error", StringComparison.InvariantCultureIgnoreCase))"
+                        style="padding-left: 24px; padding-right: 24px; min-width: 162px;"
+                        id="copyCiphertextButton"
+                        @onclick="CopyEncryptionCiphertextToClipboard">
+                    Copy ciphertext
+                </button>
+            </div>
+        </div>
+
+        <div class="tab-pane fade"
+             id="decrypt"
+             role="tabpanel">
+
+            <div class="form-group">
+                <label for="decryptionCiphertext"
+                       class="form-label mt-4">
+                    Ciphertext
+                </label>
+                <textarea class="form-control" id="decryptionCiphertext" rows="4" onClick="this.select();" @bind="decryptionCiphertext"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="decryptedMessage"
+                       class="form-label mt-4">
+                    Message
+                </label>
+                <textarea class="form-control" id="decryptedMessage" rows="4" @bind="decryptionPlaintext"></textarea>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem">
+                <button class="btn btn-primary stretch-when-narrow"
+                        disabled="@(decryptionCiphertext.NullOrEmpty() || privateKeyHexStringRef10.NullOrEmpty() || publicKeyHexString.NullOrEmpty())"
+                        style="padding-left: 24px; padding-right: 24px;"
+                        @onclick="DecryptString">
+                    Decrypt
+                </button>
+
+                <button class="btn btn-primary stretch-when-narrow"
+                        style="padding-left: 24px; padding-right: 24px;"
+                        @onclick="PasteDecryptionCiphertextFromClipboard">
+                    Paste ciphertext
+                </button>
+            </div>
         </div>
     </div>
-</div>
 
-<br />
-<br />
+    <br/>
+    <br/>
 
 </div>
 
@@ -298,6 +328,15 @@
         {
             await JSRuntime.InvokeVoidAsync("InitCopyButtonLabel", "copyCiphertextButton");
         }
+    }
+
+    private async Task SavePublicKey()
+    {
+        UserData userData = await UserDataService.GetUserData();
+
+        userData.Keyring[publicKeyHexString] = await JSRuntime.InvokeAsync<string>(Constants.InteropFunctionNames.PROMPT, "Save public key to keyring - enter recipient name here");
+
+        await UserDataService.SetUserData(userData);
     }
 
     private void EncryptString()
