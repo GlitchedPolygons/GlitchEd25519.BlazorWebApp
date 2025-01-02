@@ -161,10 +161,11 @@
             <button class="btn btn-primary"
                     type="button"
                     style="padding-left: 16px; padding-right: 16px;"
+                    onclick="document.getElementById('dialogPublicKeySelection').showModal();"
                     id="buttonLoadPublicKey">
                 Load
             </button>
-            
+
             <input type="text"
                    class="form-control"
                    id="publicKey"
@@ -183,11 +184,45 @@
         </div>
     </div>
 
-    <dialog open>
-        <p>Greetings, one and all!</p>
-        <form method="dialog">
-            <button>OK</button>
-        </form>
+    <dialog id="dialogPublicKeySelection">
+
+        <div class="card text-white bg-dark mb-3" style="max-width: 20rem;">
+
+            <div class="card-header">
+                Select public key
+            </div>
+
+            <div class="card-body">
+
+                <h4 class="card-title">
+                    Choose recipient from your keyring:
+                </h4>
+                
+                <br />
+
+                <div class="keyring">
+                    
+                    @foreach (KeyValuePair<string, string> kvp in keyring)
+                    {
+                        <button class="btn btn-primary" @onclick="() => OnSelectRecipientPublicKeyFromKeyring(kvp.Key)">
+                            @kvp.Value
+                        </button>
+                    }
+
+                </div>
+
+                <form method="dialog"
+                      class="mt-3">
+
+                    <button class="btn btn-danger">
+                        Cancel
+                    </button>
+                </form>
+
+            </div>
+        </div>
+
+
     </dialog>
 
 
@@ -245,7 +280,8 @@
                        class="form-label mt-4">
                     Ciphertext
                 </label>
-                <textarea class="form-control" id="ciphertext" rows="4" onClick="this.select();" @bind="encryptionCiphertext" readonly></textarea>
+                <textarea class="form-control" id="ciphertext" rows="4" onClick="this.select();"
+                          @bind="encryptionCiphertext" readonly></textarea>
             </div>
 
             <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem">
@@ -275,7 +311,8 @@
                        class="form-label mt-4">
                     Ciphertext
                 </label>
-                <textarea class="form-control" id="decryptionCiphertext" rows="4" onClick="this.select();" @bind="decryptionCiphertext"></textarea>
+                <textarea class="form-control" id="decryptionCiphertext" rows="4" onClick="this.select();"
+                          @bind="decryptionCiphertext"></textarea>
             </div>
 
             <div class="form-group">
@@ -308,6 +345,15 @@
 
 </div>
 
+<script type="text/javascript">
+    
+    function closeDialog() 
+    {
+        document.getElementById('dialogPublicKeySelection').close();
+    }
+    
+</script>
+
 @code
 {
     private readonly bool aesGcmSupported = AesGcm.IsSupported;
@@ -322,6 +368,15 @@
     private string publicKeyHexString = string.Empty;
     private string privateKeyHexStringRef10 = string.Empty;
 
+    IDictionary<string, string> keyring = new Dictionary<string, string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserData userData = await UserDataService.GetUserData();
+
+        keyring = userData.Keyring;
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -334,9 +389,30 @@
     {
         UserData userData = await UserDataService.GetUserData();
 
-        userData.Keyring[publicKeyHexString] = await JSRuntime.InvokeAsync<string>(Constants.InteropFunctionNames.PROMPT, "Save public key to keyring - enter recipient name here");
+        if (keyring.ContainsKey(publicKeyHexString))
+        {
+            await JSRuntime.InvokeVoidAsync(Constants.InteropFunctionNames.ALERT, "Your keyring already contains this public key; recipient will be renamed.");
+        }
+        
+        string name = await JSRuntime.InvokeAsync<string>(Constants.InteropFunctionNames.PROMPT, "Save public key to keyring - enter recipient name here");
+
+        if (name.NullOrEmpty())
+        {
+            return;
+        }
+
+        userData.Keyring[publicKeyHexString] = name;
+        
+        keyring = userData.Keyring;
 
         await UserDataService.SetUserData(userData);
+    }
+    
+    private void OnSelectRecipientPublicKeyFromKeyring(string publicKey)
+    {
+        publicKeyHexString = publicKey;
+        
+        JSRuntime.InvokeVoidAsync("closeDialog");
     }
 
     private void EncryptString()

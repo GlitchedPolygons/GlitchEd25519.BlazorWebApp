@@ -29,6 +29,7 @@ public static class Constants
     
     public static class InteropFunctionNames
     {
+        public const string ALERT = "alert";
         public const string PROMPT = "prompt";
         public const string GET_LOCALSTORAGE_VALUE = "localStorage.getItem";
         public const string SET_LOCALSTORAGE_VALUE = "localStorage.setItem";
