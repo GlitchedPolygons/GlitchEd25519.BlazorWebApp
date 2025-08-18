@@ -1,3 +1,11 @@
+> [!IMPORTANT]
+>
+> # **NOTICE:**
+>
+> ## Development of this project has been migrated to: https://codeberg.org/GlitchedPolygons/GlitchEd25519.BlazorWebApp
+>
+> ## All pull requests and issues on GitHub will be ignored from the 16th of August, 2025 onwards.
+
 # GlitchEd25519
 
 ## PWA GUI
